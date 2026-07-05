@@ -93,9 +93,11 @@ src/
 2. **Environment Configuration**:
    Copy `.env.example` to `.env.local` and populate the required variables:
    ```env
-   NEXT_PUBLIC_SITE_URL=https://your-domain.com
-   NEXT_PUBLIC_SUPABASE_URL=...
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   SITE_URL=https://your-domain.com
+   GTM_ID=GTM-XXXXXXX
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
 
 3. **Database Migration**:
