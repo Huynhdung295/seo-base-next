@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { WelcomeText } from "@/components/common/WelcomeText";
 
 import { env } from "@/lib/env";
 import { siteConfig } from "@/lib/config";
@@ -49,13 +50,7 @@ export default function HomePage() {
       <main className="flex min-h-screen flex-col">
         {/* Hero Section placeholder */}
         <section className="container flex flex-col items-center justify-center gap-6 pb-8 pt-24 md:pt-32">
-          <h1 className="text-balance text-center text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl">
-            Next.js Landing Page Boilerplate
-          </h1>
-          <p className="max-w-2xl text-balance text-center text-lg text-muted-foreground">
-            Performance-first. SEO-ready. Vercel-optimized. Built for the
-            community.
-          </p>
+          <WelcomeText />
         </section>
 
         {/* Add your sections here */}

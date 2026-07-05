@@ -5,8 +5,11 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { GoogleTagManager } from "@/components/analytics/GoogleTagManager";
 import { constructMetadata } from "@/lib/metadata";
+import { getTranslations } from "@/lib/api/get-translations";
+import { DEFAULT_LANG, SUPPORTED_LANGS, type Language } from "@/lib/constants/i18n";
+import { TranslationStoreProvider } from "@/components/providers/translation-provider";
 
-import "./globals.css";
+import "../globals.css";
 
 // ─── Font Configuration ─────────────────────────────────────
 // Using next/font/google to prevent Layout Shift (CLS)
@@ -31,18 +34,31 @@ export const viewport: Viewport = {
 
 // ─── Root Layout ────────────────────────────────────────────
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ lang: string }>;
 }>) {
+  const { lang } = await params;
+  
+  // Validate language, fallback to default if invalid
+  const validLang = SUPPORTED_LANGS.includes(lang as Language) 
+    ? (lang as Language) 
+    : DEFAULT_LANG;
+
+  const translations = await getTranslations();
+
   return (
-    <html lang="vi" suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang={validLang} suppressHydrationWarning data-scroll-behavior="smooth">
       {/* Google Tag Manager — non-blocking, loads async */}
       <GoogleTagManager />
 
       <body className={`${fontSans.variable} font-sans antialiased`}>
-        {children}
+        <TranslationStoreProvider initialData={{ translations, lang: validLang }}>
+          {children}
+        </TranslationStoreProvider>
 
         {/* Vercel Analytics — lightweight, auto-configured on Vercel */}
         <Analytics />
