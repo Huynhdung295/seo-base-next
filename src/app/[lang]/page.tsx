@@ -1,27 +1,37 @@
 import type { Metadata } from "next";
-import { WelcomeText } from "@/components/common/WelcomeText";
 
 import { env } from "@/lib/env";
 import { siteConfig } from "@/lib/config";
 import { constructMetadata } from "@/lib/metadata";
 import { StructuredData } from "@/components/common/StructuredData";
 import { generateOrganizationSchema } from "@/lib/schemas/organization";
+import { generateWebSiteSchema } from "@/lib/schemas/website";
 import { generateFAQSchema } from "@/lib/schemas/faq";
+import { HomeView } from "@/views/home/HomeView";
 
-// ─── Metadata ───────────────────────────────────────────────
+// ─── Dynamic Metadata (per language) ────────────────────────
 
-export const metadata: Metadata = constructMetadata({
-  title: "Home",
-  description: siteConfig.description,
-  canonicalUrl: "/",
-});
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+
+  return constructMetadata({
+    title: "Home",
+    description: siteConfig.description,
+    canonicalPath: "/",
+    lang,
+  });
+}
 
 // ─── Page ───────────────────────────────────────────────────
 
 export default function HomePage() {
   return (
     <>
-      {/* ─── Structured Data ──────────────────────────────── */}
+      {/* ─── Structured Data (SEO) ─────────────────────────── */}
       <StructuredData
         schema={generateOrganizationSchema({
           name: siteConfig.organization.name,
@@ -29,6 +39,13 @@ export default function HomePage() {
           description: siteConfig.organization.description,
           // logo: "https://example.com/logo.png",
           // sameAs: ["https://facebook.com/yourcompany"],
+        })}
+      />
+      <StructuredData
+        schema={generateWebSiteSchema({
+          name: siteConfig.name,
+          url: env.SITE_URL,
+          description: siteConfig.description,
         })}
       />
       <StructuredData
@@ -46,18 +63,9 @@ export default function HomePage() {
         ])}
       />
 
-      {/* ─── Page Content ─────────────────────────────────── */}
-      <main className="flex min-h-screen flex-col">
-        {/* Hero Section placeholder */}
-        <section className="container flex flex-col items-center justify-center gap-6 pb-8 pt-24 md:pt-32">
-          <WelcomeText />
-        </section>
-
-        {/* Add your sections here */}
-        {/* <HeroSection /> */}
-        {/* <FeaturesSection /> */}
-        {/* <CTASection /> */}
-      </main>
+      {/* ─── Page Content (UI) ─────────────────────────────── */}
+      {/* Devs will code the UI inside HomeView, leaving this file clean */}
+      <HomeView />
     </>
   );
 }

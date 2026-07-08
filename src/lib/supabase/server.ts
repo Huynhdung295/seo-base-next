@@ -8,8 +8,8 @@ import { env } from "@/lib/env";
  * Create a Supabase client for Server Components / Server Actions / Route Handlers.
  * Creates a new instance per request to avoid shared state.
  *
- * Uses SUPABASE_SERVICE_ROLE_KEY when available for elevated permissions,
- * falls back to the anon key.
+ * ⚠️ Uses ANON KEY by default — respects Row Level Security (RLS).
+ * For admin operations that need to bypass RLS, use createAdminSupabaseClient().
  *
  * All env values come from centralized @/lib/env (server-only).
  *
@@ -35,11 +35,44 @@ import { env } from "@/lib/env";
  */
 export function createServerSupabaseClient() {
   const supabaseUrl = env.SUPABASE_URL;
-  const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+  const supabaseKey = env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     throw new Error(
       "[Supabase] Missing environment variables. " +
+        "Set SUPABASE_URL and SUPABASE_ANON_KEY in .env.local (see .env.example)"
+    );
+  }
+
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+// ─── Admin Client (bypasses RLS) ────────────────────────────
+
+/**
+ * Create a Supabase client with SERVICE_ROLE_KEY that bypasses RLS.
+ * ⚠️ Use ONLY for admin operations, internal scripts, or webhook handlers.
+ * NEVER use this in code paths that accept user input without validation.
+ *
+ * @example
+ * import { createAdminSupabaseClient } from "@/lib/supabase/server";
+ *
+ * // Admin-only operation
+ * const supabase = createAdminSupabaseClient();
+ * await supabase.from("users").delete().eq("id", userId);
+ */
+export function createAdminSupabaseClient() {
+  const supabaseUrl = env.SUPABASE_URL;
+  const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(
+      "[Supabase Admin] Missing environment variables. " +
         "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local (see .env.example)"
     );
   }

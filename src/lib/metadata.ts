@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { env, absoluteUrl } from "@/lib/env";
 import { siteConfig } from "@/lib/config";
+import { SUPPORTED_LANGS } from "@/lib/constants/i18n";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -12,8 +13,10 @@ interface ConstructMetadataProps {
   description?: string;
   /** Open Graph image URL (absolute or relative) */
   image?: string;
-  /** Canonical URL path (e.g., "/about") */
-  canonicalUrl?: string;
+  /** Canonical URL path (e.g., "/about") — WITHOUT lang prefix */
+  canonicalPath?: string;
+  /** Current language code (e.g., "en", "vi") */
+  lang?: string;
   /** Prevent search engines from indexing this page */
   noIndex?: boolean;
   /** Additional keywords for meta tags */
@@ -28,22 +31,23 @@ interface ConstructMetadataProps {
  * Construct metadata object for Next.js `generateMetadata`.
  * Reusable across all routes for consistent SEO tags.
  *
- * @example
- * // In any page.tsx or layout.tsx:
- * export const metadata = constructMetadata({
- *   title: "About Us",
- *   description: "Learn more about our company.",
- *   canonicalUrl: "/about",
- * });
+ * Features:
+ * - Dynamic title & description
+ * - Open Graph + Twitter Card
+ * - Hreflang alternates (critical for multi-lang SEO)
+ * - Google/Bing Search Console verification
+ * - Dynamic locale per language
+ * - Canonical URL with language prefix
  *
- * // Or with generateMetadata for dynamic routes:
+ * @example
+ * // In any page.tsx with generateMetadata:
  * export async function generateMetadata({ params }) {
- *   const data = await fetchData(params.slug);
+ *   const { lang } = await params;
  *   return constructMetadata({
- *     title: data.title,
- *     description: data.excerpt,
- *     image: data.ogImage,
- *     canonicalUrl: `/${params.slug}`,
+ *     title: "About Us",
+ *     description: "Learn more about our company.",
+ *     canonicalPath: "/about",
+ *     lang,
  *   });
  * }
  */
@@ -51,24 +55,61 @@ export function constructMetadata({
   title,
   description = siteConfig.description,
   image = siteConfig.defaultOgImage,
-  canonicalUrl,
+  canonicalPath,
+  lang,
   noIndex = false,
   keywords = [],
   overrides = {},
 }: ConstructMetadataProps = {}): Metadata {
   const pageTitle = title ? `${title} | ${siteConfig.name}` : siteConfig.name;
   const ogImageUrl = image.startsWith("http") ? image : absoluteUrl(image);
-  const canonical = canonicalUrl ? absoluteUrl(canonicalUrl) : undefined;
+
+  // ─── Build canonical URL with language prefix ──────────
+  const canonical = canonicalPath
+    ? absoluteUrl(lang ? `/${lang}${canonicalPath === "/" ? "" : canonicalPath}` : canonicalPath)
+    : undefined;
+
+  // ─── Build hreflang alternates ─────────────────────────
+  // Google uses these to understand language relationships
+  const languageAlternates: Record<string, string> = {};
+  if (canonicalPath) {
+    for (const supportedLang of SUPPORTED_LANGS) {
+      const langPath = canonicalPath === "/" ? "" : canonicalPath;
+      languageAlternates[supportedLang] = absoluteUrl(`/${supportedLang}${langPath}`);
+    }
+    // x-default points to the canonical without lang prefix (for language selection page)
+    languageAlternates["x-default"] = absoluteUrl(canonicalPath);
+  }
+
+  // ─── Resolve OG locale ────────────────────────────────
+  const ogLocale = lang
+    ? (siteConfig.locales[lang] || siteConfig.defaultLocale)
+    : siteConfig.defaultLocale;
+
+  // ─── Build verification object ─────────────────────────
+  const verification: Metadata["verification"] = {};
+  if (env.GOOGLE_SITE_VERIFICATION) {
+    verification.google = env.GOOGLE_SITE_VERIFICATION;
+  }
+  if (env.BING_SITE_VERIFICATION) {
+    verification.other = {
+      ...verification.other,
+      "msvalidate.01": env.BING_SITE_VERIFICATION,
+    };
+  }
 
   return {
     title: pageTitle,
     description,
     keywords,
 
-    // ─── Canonical URL ────────────────────────────────────
+    // ─── Canonical URL + Hreflang ────────────────────────
     ...(canonical && {
       alternates: {
         canonical,
+        ...(Object.keys(languageAlternates).length > 0 && {
+          languages: languageAlternates,
+        }),
       },
     }),
 
@@ -78,7 +119,7 @@ export function constructMetadata({
       description,
       url: canonical,
       siteName: siteConfig.name,
-      locale: siteConfig.locale,
+      locale: ogLocale,
       type: "website",
       images: [
         {
@@ -111,6 +152,9 @@ export function constructMetadata({
         "max-snippet": -1,
       },
     },
+
+    // ─── Search Console Verification ─────────────────────
+    ...(Object.keys(verification).length > 0 && { verification }),
 
     // ─── Additional ───────────────────────────────────────
     metadataBase: new URL(env.SITE_URL),

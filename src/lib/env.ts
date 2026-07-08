@@ -29,6 +29,17 @@ const envSchema = z.object({
     .string()
     .default(""),
 
+  // ─── Search Console Verification ─────────────────────────
+  /** Google Search Console verification code */
+  GOOGLE_SITE_VERIFICATION: z
+    .string()
+    .default(""),
+
+  /** Bing Webmaster Tools verification code */
+  BING_SITE_VERIFICATION: z
+    .string()
+    .default(""),
+
   // ─── Supabase ───────────────────────────────────────────
   /** Supabase project URL */
   SUPABASE_URL: z
@@ -58,6 +69,8 @@ export const env = envSchema.parse({
   NODE_ENV: process.env.NODE_ENV,
   SITE_URL: process.env.SITE_URL,
   GTM_ID: process.env.GTM_ID,
+  GOOGLE_SITE_VERIFICATION: process.env.GOOGLE_SITE_VERIFICATION,
+  BING_SITE_VERIFICATION: process.env.BING_SITE_VERIFICATION,
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,

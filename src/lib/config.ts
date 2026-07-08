@@ -11,8 +11,16 @@ export const siteConfig = {
   description:
     "A modern landing page built with Next.js, optimized for performance and SEO.",
   defaultOgImage: "/og-image.png",
-  locale: "vi_VN",
-  language: "vi",
+
+  // ─── Locale Mapping (per language) ─────────────────────
+  // Used for OG locale tags and HTML lang attribute
+  locales: {
+    en: "en_US",
+    vi: "vi_VN",
+  } as Record<string, string>,
+
+  // Default locale (fallback)
+  defaultLocale: "vi_VN",
 
   // ─── Social Links ──────────────────────────────────────
   socials: {

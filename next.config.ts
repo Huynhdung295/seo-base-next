@@ -41,6 +41,17 @@ const nextConfig: NextConfig = {
             key: "Referrer-Policy",
             value: "origin-when-cross-origin",
           },
+          // HSTS — Tell browsers to always use HTTPS
+          // Vercel handles HTTPS, but this header prevents protocol downgrade attacks
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains; preload",
+          },
+          // Permissions Policy — Disable features you don't use
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
         ],
       },
       {

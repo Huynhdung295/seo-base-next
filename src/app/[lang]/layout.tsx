@@ -19,8 +19,29 @@ const fontSans = Inter({
   display: "swap",
 });
 
-// ─── Metadata ───────────────────────────────────────────────
-export const metadata: Metadata = constructMetadata();
+// ─── Static Params (Pre-render all language variants) ───────
+// This tells Next.js to generate static pages for each language
+// at build time, improving SEO crawlability and performance.
+export function generateStaticParams() {
+  return SUPPORTED_LANGS.map((lang) => ({ lang }));
+}
+
+// ─── Dynamic Metadata (per language) ────────────────────────
+// Using generateMetadata instead of static `metadata` export
+// so that title, description, hreflang, and OG locale are
+// correct for each language variant.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+
+  return constructMetadata({
+    canonicalPath: "/",
+    lang,
+  });
+}
 
 export const viewport: Viewport = {
   themeColor: [
